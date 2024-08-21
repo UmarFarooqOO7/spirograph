@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spirograph App</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        canvas {
+            border: 1px solid black;
+            background-color: black;
+            display: block;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .settings-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 10;
+            background: #fff;
+            border: 1px solid #ccc;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .controls {
+            position: absolute;
+            top: 50px;
+            left: 10px;
+            z-index: 10;
+            background: #fff;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="spiroCanvas"></canvas>
+    <div id="settings" class="controls">
+        <h1>Spirograph App</h1>
+        <label for="R">Outer Gear Size (R):</label>
+        <input type="number" id="R" value="150"><br>
+        <label for="r">Inner Gear Size (r):</label>
+        <input type="number" id="r" value="60"><br>
+        <label for="O">Pen Position (O):</label>
+        <input type="number" id="O" value="60"><br>
+        <label for="speed">Drawing Speed:</label>
+        <input type="range" id="speed" min="1" max="25" value="5">
+        <span id="speedValue">5</span><br>
+        <label for="lineWidth">Line Thickness:</label>
+        <input type="range" id="lineWidth" min="1" max="3" value="1">
+        <span id="lineWidthValue">1</span><br>
+        <button id="drawButton" onclick="drawSpirograph()">Draw Spirograph</button>
+        <button id="stopButton" onclick="stopDrawing()" disabled>Stop Drawing</button>
+        <button onclick="randomizeValues()">Randomize</button>
+        <button id="fullscreenButton" onclick="toggleFullscreen()">Fullscreen</button>
+    </div>
+    <button id="settingsButton" class="settings-btn" onclick="toggleSettings()">Settings</button>
+
+    <script>
+        const canvas = document.getElementById('spiroCanvas');
+        const ctx = canvas.getContext('2d');
+        let drawing = false;
+        let animationFrameId;
+        let t = 0;
+        let hue = 0;
+        let speed = 5;
+        let lineWidth = 1;
+
+        const MAX_DRAWING_TIME = 1 * 30 * 1000; // 1 minute in milliseconds
+        const SPEED_CHANGE_INTERVAL = 1 * 1000; // Interval for changing speed (in milliseconds)
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Update canvas size on window resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        document.getElementById('speed').addEventListener('input', function () {
+            speed = parseInt(this.value);
+            document.getElementById('speedValue').innerText = speed;
+        });
+
+        document.getElementById('lineWidth').addEventListener('input', function () {
+            lineWidth = parseInt(this.value);
+            document.getElementById('lineWidthValue').innerText = lineWidth;
+        });
+
+        function drawSpirograph() {
+            if (drawing) return;  // Prevent drawing if already in progress
+            drawing = true;
+            document.getElementById('drawButton').disabled = true;
+            document.getElementById('stopButton').disabled = false;
+
+            // Randomize speed and line thickness
+            speed = getRandomInt(1, 25);
+            lineWidth = getRandomInt(1, 2);
+            document.getElementById('speed').value = speed;
+            document.getElementById('lineWidth').value = lineWidth;
+            document.getElementById('speedValue').innerText = speed;
+            document.getElementById('lineWidthValue').innerText = lineWidth;
+
+            const R = parseFloat(document.getElementById('R').value);
+            const r = parseFloat(document.getElementById('r').value);
+            const O = parseFloat(document.getElementById('O').value);
+
+            // Clear and resize the canvas
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Calculate the total time required to complete the shape
+            const startT = 0;
+            const totalTime = 2 * Math.PI * (R / Math.gcd(R, r));
+
+            // Start drawing from the correct initial pen position
+            const initialX = (R - r) * Math.cos(startT) + O * Math.cos(startT);
+            const initialY = (R - r) * Math.sin(startT) - O * Math.sin(startT);
+
+            let prevX = canvas.width / 2 + initialX;
+            let prevY = canvas.height / 2 + initialY;
+
+            t = 0; // Reset time to start drawing from the correct point
+
+            const startTime = Date.now(); // Record the start time
+
+            // Function to change speed at intervals
+            function changeSpeed() {
+                if (drawing) {
+                    speed = getRandomInt(1, 25);
+                    document.getElementById('speed').value = speed;
+                    document.getElementById('speedValue').innerText = speed;
+                    setTimeout(changeSpeed, SPEED_CHANGE_INTERVAL);
+                }
+            }
+
+            // Start changing speed
+            changeSpeed();
+
+            function draw() {
+                if (!drawing) return;
+
+                // Calculate elapsed time
+                const elapsedTime = Date.now() - startTime;
+
+                // Stop drawing if the elapsed time exceeds MAX_DRAWING_TIME
+                if (elapsedTime >= MAX_DRAWING_TIME) {
+                    stopDrawing();
+                    randomizeValues(); // Randomize values after stopping
+                    drawSpirograph();  // Start a new drawing
+                    return;
+                }
+
+                t += 0.01 * speed;
+
+                const x = (R - r) * Math.cos(t) + O * Math.cos((R - r) / r * t);
+                const y = (R - r) * Math.sin(t) - O * Math.sin((R - r) / r * t);
+
+                // Smooth rainbow color transition
+                hue = (hue + 0.5) % 360;
+                const strokeStyle = `hsl(${hue}, 100%, 50%)`;
+
+                // Draw the line segment
+                ctx.lineWidth = lineWidth;
+                ctx.strokeStyle = strokeStyle;
+
+                ctx.beginPath();  // Start a new path for each segment
+                ctx.moveTo(prevX, prevY);
+                ctx.lineTo(canvas.width / 2 + x, canvas.height / 2 + y);
+                ctx.stroke();
+
+                prevX = canvas.width / 2 + x;
+                prevY = canvas.height / 2 + y;
+
+                // Check if drawing should stop
+                if (t >= totalTime) {
+                    stopDrawing();
+                    randomizeValues(); // Randomize values after completion
+                    drawSpirograph();  // Start a new drawing
+                } else {
+                    animationFrameId = requestAnimationFrame(draw);
+                }
+            }
+
+            draw();
+        }
+
+        function stopDrawing() {
+            drawing = false;
+            cancelAnimationFrame(animationFrameId);
+            document.getElementById('drawButton').disabled = false;
+            document.getElementById('stopButton').disabled = true;
+        }
+
+        function randomizeValues() {
+            const R = getRandomInt(300, 500);  // Outer Gear Size between 100 and 200
+            const r = getRandomInt(60, 700);   // Inner Gear Size between 30 and 100
+            const O = getRandomInt(20, r);     // Pen Position between 10 and r
+
+            document.getElementById('R').value = R;
+            document.getElementById('r').value = r;
+            document.getElementById('O').value = O;
+        }
+
+        function toggleSettings() {
+            const settings = document.getElementById('settings');
+            settings.classList.toggle('hidden');
+            const isHidden = settings.classList.contains('hidden');
+            const settingsButton = document.getElementById('settingsButton');
+            // Show/hide settings button based on visibility
+            // settingsButton.style.display = isHidden ? 'block' : 'none';
+            if (!isHidden && !drawing) {
+                drawSpirograph();
+            }
+        }
+
+        // Helper function to generate a random integer between min and max (inclusive)
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        // Helper function to calculate GCD (Greatest Common Divisor)
+        Math.gcd = function (a, b) {
+            if (!b) return a;
+            return Math.gcd(b, a % b);
+        };
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                // Enter fullscreen mode
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen();
+                } else if (document.documentElement.mozRequestFullScreen) { // Firefox
+                    document.documentElement.mozRequestFullScreen();
+                } else if (document.documentElement.webkitRequestFullscreen) { // Chrome, Safari and Opera
+                    document.documentElement.webkitRequestFullscreen();
+                } else if (document.documentElement.msRequestFullscreen) { // IE/Edge
+                    document.documentElement.msRequestFullscreen();
+                }
+            } else {
+                // Exit fullscreen mode
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) { // Firefox
+                    document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) { // Chrome, Safari and Opera
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) { // IE/Edge
+                    document.msExitFullscreen();
+                }
+            }
+        }
+
+    </script>
+</body>
+
+</html>
