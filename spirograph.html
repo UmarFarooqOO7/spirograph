@@ -67,6 +67,11 @@
         <button id="stopButton" onclick="stopDrawing()" disabled>Stop Drawing</button>
         <button onclick="randomizeValues()">Randomize</button>
         <button id="fullscreenButton" onclick="toggleFullscreen()">Fullscreen</button>
+
+        <br>
+        <label for="downloadToggle">Enable Download:</label>
+        <input type="checkbox" id="downloadToggle"><br>
+        <a id="downloadLink" class="hidden" download="spirograph.png"></a>
     </div>
     <button id="settingsButton" class="settings-btn" onclick="toggleSettings()">Settings</button>
 
@@ -162,6 +167,11 @@
                 // Stop drawing if the elapsed time exceeds MAX_DRAWING_TIME
                 if (elapsedTime >= MAX_DRAWING_TIME) {
                     stopDrawing();
+
+                    if (document.getElementById('downloadToggle').checked) {
+                        downloadDrawing(); // Download drawing if enabled
+                    }
+
                     randomizeValues(); // Randomize values after stopping
                     drawSpirograph();  // Start a new drawing
                     return;
@@ -191,6 +201,11 @@
                 // Check if drawing should stop
                 if (t >= totalTime) {
                     stopDrawing();
+
+                    if (document.getElementById('downloadToggle').checked) {
+                        downloadDrawing(); // Download drawing if enabled
+                    }
+
                     randomizeValues(); // Randomize values after completion
                     drawSpirograph();  // Start a new drawing
                 } else {
@@ -240,6 +255,28 @@
             if (!b) return a;
             return Math.gcd(b, a % b);
         };
+
+        function downloadDrawing() {
+            // Get the current settings
+            const R = document.getElementById('R').value;
+            const r = document.getElementById('r').value;
+            const O = document.getElementById('O').value;
+
+            // Create a filename based on the current settings
+            const filename = `spirograph_R${R}_r${r}_O${O}.png`;
+
+            // Generate the data URL for the canvas image
+            const dataURL = canvas.toDataURL('image/png');
+
+            // Create a link element
+            const link = document.getElementById('downloadLink');
+            link.href = dataURL;
+            link.download = filename; // Set the filename for the download
+
+            // Trigger the download
+            link.click();
+        }
+
 
         function toggleFullscreen() {
             if (!document.fullscreenElement) {
