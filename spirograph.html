@@ -212,7 +212,7 @@
                 // Check if random color is enabled or use fixed color
                 const isRandomColor = document.getElementById('randomColorToggle').checked;
                 if (isRandomColor) {
-                    hue = (hue + 0.5) % 360; // Smooth rainbow color transition
+                    hue = (hue + 0.2) % 360; // Smooth rainbow color transition
                     ctx.strokeStyle = `hsl(${hue}, 100%, 50%)`;
                 } else {
                     ctx.strokeStyle = document.getElementById('fixedLineColor').value; // Use the fixed color
