@@ -74,6 +74,12 @@
         <label for="fixedLineColor">Fixed Line Color:</label>
         <input type="color" id="fixedLineColor" value="#ff0000">
         <br>
+
+        <label for="glowIntensity">Glow Intensity:</label>
+        <input type="range" id="glowIntensity" min="0" max="50" value="15">
+        <span id="glowIntensityValue">15</span><br>
+        <br>
+
         <button id="drawButton" onclick="drawSpirograph()">Draw Spirograph</button>
         <button id="stopButton" onclick="stopDrawing()" disabled>Stop Drawing</button>
         <button onclick="randomizeValues()">Randomize</button>
@@ -95,6 +101,7 @@
         let hue = 0;
         let speed = 5;
         let lineWidth = 1;
+        let glowIntensity = 0;
 
         const MAX_DRAWING_TIME = 1 * 30 * 1000; // 1 minute in milliseconds
         const SPEED_CHANGE_INTERVAL = 3 * 1000; // Interval for changing speed (in milliseconds)
@@ -127,6 +134,13 @@
             const isRandom = this.checked;
             document.getElementById('fixedLineColor').disabled = isRandom;  // Disable fixed color input if random is selected
         });
+
+        document.getElementById('glowIntensity').addEventListener('input', function () {
+            glowIntensity = parseInt(this.value);
+            document.getElementById('glowIntensityValue').innerText = glowIntensity;
+            ctx.shadowBlur = glowIntensity;
+        });
+
 
         function drawSpirograph() {
             if (drawing) return;  // Prevent drawing if already in progress
@@ -204,6 +218,13 @@
                     ctx.strokeStyle = document.getElementById('fixedLineColor').value; // Use the fixed color
                 }
 
+                // Apply glowing effect
+                const glowIntensity = document.getElementById('glowIntensity').value;
+                ctx.shadowBlur = glowIntensity;  // Set the glow intensity
+                ctx.shadowColor = ctx.strokeStyle;  // Use the line color for the glow
+                ctx.shadowOffsetX = 0;  // Offset of the shadow on X axis
+                ctx.shadowOffsetY = 0;  // Offset of the shadow on Y axis
+
                 // Draw the line segment
                 ctx.lineWidth = lineWidth;
 
@@ -211,6 +232,12 @@
                 ctx.moveTo(prevX, prevY);
                 ctx.lineTo(canvas.width / 2 + x, canvas.height / 2 + y);
                 ctx.stroke();
+
+                // Reset shadow properties to avoid affecting other drawings
+                ctx.shadowBlur = 0;
+                ctx.shadowColor = 'transparent';
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
 
                 prevX = canvas.width / 2 + x;
                 prevY = canvas.height / 2 + y;
@@ -260,6 +287,13 @@
             // Randomize line color
             const randomLineColor = getRandomColor();
             document.getElementById('fixedLineColor').value = randomLineColor;
+
+            const glowIntensity = getRandomInt(5, 50); // Random glow intensity between 5 and 50
+            document.getElementById('glowIntensity').value = glowIntensity;
+            document.getElementById('glowIntensityValue').innerText = glowIntensity;
+
+            // Update the canvas glow intensity
+            ctx.shadowBlur = glowIntensity;
         }
 
         function toggleSettings() {
