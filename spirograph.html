@@ -63,6 +63,17 @@
         <label for="lineWidth">Line Thickness:</label>
         <input type="range" id="lineWidth" min="1" max="3" value="1">
         <span id="lineWidthValue">1</span><br>
+
+        <label for="bgColorPicker">Background Color:</label>
+        <input type="color" id="bgColorPicker" value="#000000">
+        <br>
+
+        <label for="randomColorToggle">Random Line Colors:</label>
+        <input type="checkbox" id="randomColorToggle" checked><br>
+
+        <label for="fixedLineColor">Fixed Line Color:</label>
+        <input type="color" id="fixedLineColor" value="#ff0000">
+        <br>
         <button id="drawButton" onclick="drawSpirograph()">Draw Spirograph</button>
         <button id="stopButton" onclick="stopDrawing()" disabled>Stop Drawing</button>
         <button onclick="randomizeValues()">Randomize</button>
@@ -105,6 +116,16 @@
         document.getElementById('lineWidth').addEventListener('input', function () {
             lineWidth = parseInt(this.value);
             document.getElementById('lineWidthValue').innerText = lineWidth;
+        });
+
+        document.getElementById('bgColorPicker').addEventListener('input', function () {
+            const bgColor = this.value;
+            canvas.style.backgroundColor = bgColor;
+        });
+
+        document.getElementById('randomColorToggle').addEventListener('change', function () {
+            const isRandom = this.checked;
+            document.getElementById('fixedLineColor').disabled = isRandom;  // Disable fixed color input if random is selected
         });
 
         function drawSpirograph() {
@@ -182,13 +203,17 @@
                 const x = (R - r) * Math.cos(t) + O * Math.cos((R - r) / r * t);
                 const y = (R - r) * Math.sin(t) - O * Math.sin((R - r) / r * t);
 
-                // Smooth rainbow color transition
-                hue = (hue + 0.5) % 360;
-                const strokeStyle = `hsl(${hue}, 100%, 50%)`;
+                // Check if random color is enabled or use fixed color
+                const isRandomColor = document.getElementById('randomColorToggle').checked;
+                if (isRandomColor) {
+                    hue = (hue + 0.5) % 360; // Smooth rainbow color transition
+                    ctx.strokeStyle = `hsl(${hue}, 100%, 50%)`;
+                } else {
+                    ctx.strokeStyle = document.getElementById('fixedLineColor').value; // Use the fixed color
+                }
 
                 // Draw the line segment
                 ctx.lineWidth = lineWidth;
-                ctx.strokeStyle = strokeStyle;
 
                 ctx.beginPath();  // Start a new path for each segment
                 ctx.moveTo(prevX, prevY);
