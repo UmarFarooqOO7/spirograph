@@ -61,7 +61,7 @@
         <input type="range" id="speed" min="1" max="25" value="5">
         <span id="speedValue">5</span><br>
         <label for="lineWidth">Line Thickness:</label>
-        <input type="range" id="lineWidth" min="1" max="3" value="1">
+        <input type="range" id="lineWidth" min="3" max="5" value="3">
         <span id="lineWidthValue">1</span><br>
 
         <label for="bgColorPicker">Background Color:</label>
@@ -133,14 +133,6 @@
             drawing = true;
             document.getElementById('drawButton').disabled = true;
             document.getElementById('stopButton').disabled = false;
-
-            // Randomize speed and line thickness
-            // speed = getRandomInt(1, 25);
-            // lineWidth = getRandomInt(1, 2);
-            // document.getElementById('speed').value = speed;
-            // document.getElementById('lineWidth').value = lineWidth;
-            // document.getElementById('speedValue').innerText = speed;
-            // document.getElementById('lineWidthValue').innerText = lineWidth;
 
             const R = parseFloat(document.getElementById('R').value);
             const r = parseFloat(document.getElementById('r').value);
@@ -256,6 +248,14 @@
             document.getElementById('R').value = R;
             document.getElementById('r').value = r;
             document.getElementById('O').value = O;
+
+            // Randomize speed and line thickness
+            speed = getRandomInt(5, 25);
+            lineWidth = getRandomInt(3, 5);
+            document.getElementById('speed').value = speed;
+            document.getElementById('lineWidth').value = lineWidth;
+            document.getElementById('speedValue').innerText = speed;
+            document.getElementById('lineWidthValue').innerText = lineWidth;
 
             // Randomize line color
             const randomLineColor = getRandomColor();
