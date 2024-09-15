@@ -79,8 +79,8 @@
         <input type="range" id="glowIntensity" min="0" max="50" value="15">
         <span id="glowIntensityValue">15</span>
         <br>
-        
-        <label for="finiteToggle">Fixed Time (1 minute):</label>
+
+        <label for="finiteToggle">Fixed Time:</label>
         <input type="checkbox" id="finiteToggle" checked>
         <br>
 
@@ -88,7 +88,7 @@
         <button id="stopButton" onclick="stopDrawing()" disabled>Stop Drawing</button>
         <button onclick="randomizeValues()">Randomize</button>
         <button id="fullscreenButton" onclick="toggleFullscreen()">Fullscreen</button>
-        
+
         <br>
         <button onclick="downloadDrawing()">Download</button>
         <label for="downloadToggle">Enable Download:</label>
@@ -110,6 +110,8 @@
 
         const MAX_DRAWING_TIME = 1 * 30 * 1000; // 1 minute in milliseconds
         const SPEED_CHANGE_INTERVAL = 3 * 1000; // Interval for changing speed (in milliseconds)
+        // Time to wait before starting the next drawing (in milliseconds)
+        const WAIT_TIME_AFTER_DRAW = 5000; // 5 seconds
 
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -147,14 +149,63 @@
         });
 
         // Handle key press for "next" arrow in infinite mode
+        // document.addEventListener('keydown', function (event) {
+        //     if (event.key === 'ArrowRight' && !document.getElementById('finiteToggle').checked) {
+        //         stopDrawing();
+        //         randomizeValues(); // Generate new graph
+        //         drawSpirograph();  // Start new graph
+        //     }
+        // });
+
+        // Add an event listener to listen for key presses
         document.addEventListener('keydown', function (event) {
-            if (event.key === 'ArrowRight' && !document.getElementById('finiteToggle').checked) {
-                stopDrawing();
-                randomizeValues(); // Generate new graph
-                drawSpirograph();  // Start new graph
+            // Convert the key to lowercase to ensure case insensitivity
+            let key = event.key.toLowerCase();
+
+            switch (key) {
+                case 's': // Stop drawing
+                    console.log('Shortcut S: Stop drawing');
+                    stopDrawing();
+                    break;
+
+                case 'd': // Start drawing
+                    console.log('Shortcut D: Start drawing');
+                    drawSpirograph();
+                    break;
+
+                case 'r': // Randomize values
+                    console.log('Shortcut R: Randomize values');
+                    randomizeValues();
+                    break;
+
+                case 'f': // Toggle full screen
+                    console.log('Shortcut F: Toggle full screen');
+                    toggleFullscreen();
+                    break;
+
+                case 't': // Toggle fixed time
+                    console.log('Shortcut T: Toggle fixed time');
+                    toggleFixedTime();
+                    break;
+
+                case 'l': // Toggle random line colors
+                    console.log('Shortcut L: Toggle random line colors');
+                    toggleRandomLineColors();
+                    break;
+
+                case 'q': // Toggle settings
+                    console.log('Shortcut Q: Toggle settings');
+                    toggleSettings();
+                    break;
+
+                default:
+                    console.log('Key not mapped to any action.');
             }
         });
 
+        let isZooming = false;
+        let zoomLevel = 1;
+        let savedImage;  // Variable to store the snapshot of the drawing
 
         function drawSpirograph() {
             if (drawing) return;  // Prevent drawing if already in progress
@@ -196,6 +247,35 @@
                 }
             }
 
+            function handleDrawingFinished() {
+                // Stop drawing
+                stopDrawing();
+
+                // Optionally download the drawing if enabled
+                if (document.getElementById('downloadToggle').checked) {
+                    downloadDrawing();
+                }
+
+                // Save the drawing as an image
+                savedImage = new Image();
+                savedImage.src = canvas.toDataURL(); // Save the current canvas content as an image
+
+
+                // Start zooming in on the drawing
+                isZooming = true;
+                zoomLevel = 1; // Reset zoom level
+                zoomDrawing();
+
+                // Stop the rotation after the wait time and start a new drawing
+                setTimeout(() => {
+                    isZooming = false; // Stop the zoom
+                    zoomLevel = 1;  // Reset zoom level for the next time
+
+                    randomizeValues(); // Randomize for the next spirograph
+                    drawSpirograph();  // Start drawing again
+                }, WAIT_TIME_AFTER_DRAW);
+            }
+
             // Start changing speed
             changeSpeed();
 
@@ -209,14 +289,8 @@
                 if (document.getElementById('finiteToggle').checked) {
                     // Stop drawing if the elapsed time exceeds MAX_DRAWING_TIME
                     if (elapsedTime >= MAX_DRAWING_TIME) {
-                        stopDrawing();
 
-                        if (document.getElementById('downloadToggle').checked) {
-                            downloadDrawing(); // Download drawing if enabled
-                        }
-
-                        randomizeValues(); // Randomize values after stopping
-                        drawSpirograph();  // Start a new drawing
+                        handleDrawingFinished();
                         return;
                     }
                 }
@@ -261,14 +335,7 @@
 
                 // Check if drawing should stop
                 if (t >= totalTime) {
-                    stopDrawing();
-
-                    if (document.getElementById('downloadToggle').checked) {
-                        downloadDrawing(); // Download drawing if enabled
-                    }
-
-                    randomizeValues(); // Randomize values after completion
-                    drawSpirograph();  // Start a new drawing
+                    handleDrawingFinished();
                 } else {
                     animationFrameId = requestAnimationFrame(draw);
                 }
@@ -394,6 +461,47 @@
             }
         }
 
+        function toggleFixedTime() {
+            let finiteToggle = document.getElementById('finiteToggle');
+            finiteToggle.checked = !finiteToggle.checked;
+            console.log("Fixed time toggle: " + finiteToggle.checked);
+        }
+
+        function toggleRandomLineColors() {
+            let randomColorToggle = document.getElementById('randomColorToggle');
+            randomColorToggle.checked = !randomColorToggle.checked;
+            console.log("Random line colors toggle: " + randomColorToggle.checked);
+        }
+
+        function zoomDrawing() {
+            if (!isZooming || !savedImage) return; // Stop if not zooming or no image is saved
+
+            // Clear the canvas before applying zoom
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Save the current canvas state
+            ctx.save();
+
+            // Translate to the center of the canvas
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+
+            // Apply the scaling transformation for zooming
+            ctx.scale(zoomLevel, zoomLevel);
+
+            // Draw the saved image centered on the canvas
+            ctx.drawImage(savedImage, -canvas.width / 2, -canvas.height / 2);
+
+            // Restore the canvas state
+            ctx.restore();
+
+            // Increase the zoom level for the next frame
+            zoomLevel += 0.02; // You can adjust the zoom speed if necessary
+
+            // Continue zooming the image using requestAnimationFrame
+            if (isZooming) {
+                requestAnimationFrame(zoomDrawing);
+            }
+        }
     </script>
 </body>
 
