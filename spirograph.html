@@ -65,14 +65,14 @@
         <span id="lineWidthValue">1</span><br>
 
         <label for="bgColorPicker">Background Color:</label>
-        <input type="color" id="bgColorPicker" value="#000000">
+        <input type="color" id="bgColorPicker" value="#ffffff">
         <br>
 
         <label for="randomColorToggle">Random Line Colors:</label>
         <input type="checkbox" id="randomColorToggle" checked><br>
 
         <label for="fixedLineColor">Fixed Line Color:</label>
-        <input type="color" id="fixedLineColor" value="#ff0000">
+        <input type="color" id="fixedLineColor" value="#0040ff">
         <br>
 
         <label for="glowIntensity">Glow Intensity:</label>
@@ -94,8 +94,8 @@
         <label for="downloadToggle">Enable Download:</label>
         <input type="checkbox" id="downloadToggle"><br>
         <a id="downloadLink" class="hidden" download="spirograph.png"></a>
+        <!-- <button id="settingsButton" class="settings-btn" onclick="toggleSettings()">Settings</button> -->
     </div>
-    <button id="settingsButton" class="settings-btn" onclick="toggleSettings()">Settings</button>
 
     <script>
         const canvas = document.getElementById('spiroCanvas');
@@ -115,6 +115,8 @@
 
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
+
+        canvas.style.backgroundColor = document.getElementById('bgColorPicker').value;
 
         // Update canvas size on window resize
         window.addEventListener('resize', () => {
