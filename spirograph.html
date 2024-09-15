@@ -77,7 +77,11 @@
 
         <label for="glowIntensity">Glow Intensity:</label>
         <input type="range" id="glowIntensity" min="0" max="50" value="15">
-        <span id="glowIntensityValue">15</span><br>
+        <span id="glowIntensityValue">15</span>
+        <br>
+        
+        <label for="finiteToggle">Fixed Time (1 minute):</label>
+        <input type="checkbox" id="finiteToggle" checked>
         <br>
 
         <button id="drawButton" onclick="drawSpirograph()">Draw Spirograph</button>
@@ -141,6 +145,15 @@
             ctx.shadowBlur = glowIntensity;
         });
 
+        // Handle key press for "next" arrow in infinite mode
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'ArrowRight' && !document.getElementById('finiteToggle').checked) {
+                stopDrawing();
+                randomizeValues(); // Generate new graph
+                drawSpirograph();  // Start new graph
+            }
+        });
+
 
         function drawSpirograph() {
             if (drawing) return;  // Prevent drawing if already in progress
@@ -175,7 +188,7 @@
             // Function to change speed at intervals
             function changeSpeed() {
                 if (drawing) {
-                    speed = getRandomInt(1, 25);
+                    speed = getRandomInt(5, 25);
                     document.getElementById('speed').value = speed;
                     document.getElementById('speedValue').innerText = speed;
                     setTimeout(changeSpeed, SPEED_CHANGE_INTERVAL);
@@ -191,17 +204,20 @@
                 // Calculate elapsed time
                 const elapsedTime = Date.now() - startTime;
 
-                // Stop drawing if the elapsed time exceeds MAX_DRAWING_TIME
-                if (elapsedTime >= MAX_DRAWING_TIME) {
-                    stopDrawing();
+                // Check if finite time is enabled (finiteToggle checkbox checked)
+                if (document.getElementById('finiteToggle').checked) {
+                    // Stop drawing if the elapsed time exceeds MAX_DRAWING_TIME
+                    if (elapsedTime >= MAX_DRAWING_TIME) {
+                        stopDrawing();
 
-                    if (document.getElementById('downloadToggle').checked) {
-                        downloadDrawing(); // Download drawing if enabled
+                        if (document.getElementById('downloadToggle').checked) {
+                            downloadDrawing(); // Download drawing if enabled
+                        }
+
+                        randomizeValues(); // Randomize values after stopping
+                        drawSpirograph();  // Start a new drawing
+                        return;
                     }
-
-                    randomizeValues(); // Randomize values after stopping
-                    drawSpirograph();  // Start a new drawing
-                    return;
                 }
 
                 t += 0.01 * speed;
