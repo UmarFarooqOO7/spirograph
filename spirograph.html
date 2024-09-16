@@ -57,9 +57,17 @@
         <input type="number" id="r" value="60"><br>
         <label for="O">Pen Position (O):</label>
         <input type="number" id="O" value="60"><br>
+
+        <br>
         <label for="speed">Drawing Speed:</label>
         <input type="range" id="speed" min="1" max="25" value="5">
-        <span id="speedValue">5</span><br>
+        <span id="speedValue">5</span>
+        <br>
+        <label for="randomSpeedToggle">Random Speed</label>
+        <input type="checkbox" id="randomSpeedToggle" />
+        <br>
+        <br>
+
         <label for="lineWidth">Line Thickness:</label>
         <input type="range" id="lineWidth" min="3" max="5" value="3">
         <span id="lineWidthValue">1</span><br>
@@ -79,9 +87,11 @@
         <input type="range" id="glowIntensity" min="0" max="50" value="15">
         <span id="glowIntensityValue">15</span>
         <br>
+        <br>
 
         <label for="finiteToggle">Fixed Time:</label>
         <input type="checkbox" id="finiteToggle" checked>
+        <br>
         <br>
 
         <button id="drawButton" onclick="drawSpirograph()">Draw Spirograph</button>
@@ -107,6 +117,9 @@
         let speed = 5;
         let lineWidth = 1;
         let glowIntensity = 0;
+
+        // This variable will control whether random speed is enabled or disabled
+        let isRandomSpeedEnabled = false;
 
         const MAX_DRAWING_TIME = 1 * 30 * 1000; // 1 minute in milliseconds
         const SPEED_CHANGE_INTERVAL = 3 * 1000; // Interval for changing speed (in milliseconds)
@@ -150,14 +163,11 @@
             ctx.shadowBlur = glowIntensity;
         });
 
-        // Handle key press for "next" arrow in infinite mode
-        // document.addEventListener('keydown', function (event) {
-        //     if (event.key === 'ArrowRight' && !document.getElementById('finiteToggle').checked) {
-        //         stopDrawing();
-        //         randomizeValues(); // Generate new graph
-        //         drawSpirograph();  // Start new graph
-        //     }
-        // });
+        // Event listener for the checkbox to toggle random speed
+        document.getElementById('randomSpeedToggle').addEventListener('change', function () {
+            isRandomSpeedEnabled = this.checked;
+            console.log("Random speed: " + (isRandomSpeedEnabled ? "Enabled" : "Disabled"));
+        });
 
         // Add an event listener to listen for key presses
         document.addEventListener('keydown', function (event) {
@@ -241,7 +251,7 @@
 
             // Function to change speed at intervals
             function changeSpeed() {
-                if (drawing) {
+                if (drawing && isRandomSpeedEnabled) {
                     speed = getRandomInt(5, 25);
                     document.getElementById('speed').value = speed;
                     document.getElementById('speedValue').innerText = speed;
