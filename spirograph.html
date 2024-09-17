@@ -100,6 +100,8 @@
         <button id="fullscreenButton" onclick="toggleFullscreen()">Fullscreen</button>
 
         <br>
+        <button id="copyValuesButton">Copy Values</button>
+
         <button onclick="downloadDrawing()">Download</button>
         <label for="downloadToggle">Enable Download:</label>
         <input type="checkbox" id="downloadToggle"><br>
@@ -169,6 +171,29 @@
             console.log("Random speed: " + (isRandomSpeedEnabled ? "Enabled" : "Disabled"));
         });
 
+        // Event listeners for input changes
+        document.getElementById('R').addEventListener('input', drawSpirographFull);
+        document.getElementById('r').addEventListener('input', drawSpirographFull);
+        document.getElementById('O').addEventListener('input', drawSpirographFull);
+
+        document.getElementById('copyValuesButton').addEventListener('click', function () {
+            // Get values from inputs
+            const R = document.getElementById('R').value;
+            const r = document.getElementById('r').value;
+            const O = document.getElementById('O').value;
+
+            // Create a text string with the values
+            const textToCopy = `R: ${R}\nr: ${r}\nO: ${O}`;
+
+            // Use the Clipboard API to copy the text
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                // alert('Values copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy values: ', err);
+            });
+        });
+
+
         // Add an event listener to listen for key presses
         document.addEventListener('keydown', function (event) {
             // Convert the key to lowercase to ensure case insensitivity
@@ -232,7 +257,7 @@
             // Clear and resize the canvas
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // Calculate the total time required to complete the shape
             const startT = 0;
@@ -363,6 +388,39 @@
             document.getElementById('stopButton').disabled = true;
         }
 
+        // Function to draw the full design without animations
+        function drawSpirographFull() {
+            const R = parseFloat(document.getElementById('R').value);
+            const r = parseFloat(document.getElementById('r').value);
+            const O = parseFloat(document.getElementById('O').value);
+
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const startT = 0;
+            const totalTime = 2 * Math.PI * (R / Math.gcd(R, r));
+
+            let x, y;
+            const points = [];
+
+            for (let t = 0; t <= totalTime; t += 0.01) {
+                x = (R - r) * Math.cos(t) + O * Math.cos((R - r) / r * t);
+                y = (R - r) * Math.sin(t) - O * Math.sin((R - r) / r * t);
+
+                points.push({ x: canvas.width / 2 + x, y: canvas.height / 2 + y });
+            }
+
+            // Draw the design in one go
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, points[0].y);
+
+            points.forEach(point => {
+                ctx.lineTo(point.x, point.y);
+            });
+
+            ctx.stroke();
+        }
+
         function randomizeValues() {
             const R = getRandomInt(300, 500);  // Outer Gear Size between 100 and 200
             const r = getRandomInt(60, 700);   // Inner Gear Size between 30 and 100
@@ -390,6 +448,8 @@
 
             // Update the canvas glow intensity
             ctx.shadowBlur = glowIntensity;
+
+            drawSpirographFull();
         }
 
         function toggleSettings() {
