@@ -186,10 +186,25 @@
             console.log("Random speed: " + (isRandomSpeedEnabled ? "Enabled" : "Disabled"));
         });
 
-        // Event listeners for input changes
-        document.getElementById('R').addEventListener('input', drawSpirographFull);
-        document.getElementById('r').addEventListener('input', drawSpirographFull);
-        document.getElementById('O').addEventListener('input', drawSpirographFull);
+        // Debounce function to limit how often drawSpirographFull is called
+        function debounce(func, delay) {
+            let timeoutId;
+            return function (...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => {
+                    func.apply(this, args);
+                }, delay);
+            };
+        }
+
+        // Debounced version of drawSpirographFull
+        const debouncedDrawSpirographFull = debounce(drawSpirographFull, 500); // 300ms delay
+
+        // Event listeners for input changes with debounced function
+        document.getElementById('R').addEventListener('input', debouncedDrawSpirographFull);
+        document.getElementById('r').addEventListener('input', debouncedDrawSpirographFull);
+        document.getElementById('O').addEventListener('input', debouncedDrawSpirographFull);
+
 
         // Event listeners for lock toggles
         document.getElementById('lockR').addEventListener('change', function () {
@@ -442,9 +457,16 @@
             ctx.beginPath();
             ctx.moveTo(points[0].x, points[0].y);
 
-            points.forEach(point => {
+            ctx.strokeStyle = document.getElementById('fixedLineColor').value; // Use the fixed color
 
-                ctx.strokeStyle = document.getElementById('fixedLineColor').value; // Use the fixed color
+            // Apply glowing effect
+            const glowIntensity = document.getElementById('glowIntensity').value;
+            ctx.shadowBlur = glowIntensity;  // Set the glow intensity
+            ctx.shadowColor = ctx.strokeStyle;  // Use the line color for the glow
+            ctx.shadowOffsetX = 0;  // Offset of the shadow on X axis
+            ctx.shadowOffsetY = 0;  // Offset of the shadow on Y axis
+
+            points.forEach(point => {
 
                 ctx.lineTo(point.x, point.y);
             });
