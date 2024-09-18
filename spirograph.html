@@ -52,11 +52,21 @@
     <div id="settings" class="controls">
         <h1>Spirograph App</h1>
         <label for="R">Outer Gear Size (R):</label>
-        <input type="number" id="R" value="150"><br>
+        <input type="number" id="R" value="150">
+        <label for="lockR">Lock</label>
+        <input type="checkbox" id="lockR">
+        <br>
+
         <label for="r">Inner Gear Size (r):</label>
-        <input type="number" id="r" value="60"><br>
+        <input type="number" id="r" value="60">
+        <label for="lockr">Lock</label>
+        <input type="checkbox" id="lockr">
+        <br>
         <label for="O">Pen Position (O):</label>
-        <input type="number" id="O" value="60"><br>
+        <input type="number" id="O" value="60">.
+        <label for="lockO">Lock</label>
+        <input type="checkbox" id="lockO">
+        <br>
 
         <br>
         <label for="speed">Drawing Speed:</label>
@@ -120,6 +130,11 @@
         let lineWidth = 1;
         let glowIntensity = 0;
 
+        // Initialize the locked status
+        let isRLocked = false;
+        let isrLocked = false;
+        let isOLocked = false;
+
         // This variable will control whether random speed is enabled or disabled
         let isRandomSpeedEnabled = false;
 
@@ -175,6 +190,19 @@
         document.getElementById('R').addEventListener('input', drawSpirographFull);
         document.getElementById('r').addEventListener('input', drawSpirographFull);
         document.getElementById('O').addEventListener('input', drawSpirographFull);
+
+        // Event listeners for lock toggles
+        document.getElementById('lockR').addEventListener('change', function () {
+            isRLocked = this.checked;
+        });
+
+        document.getElementById('lockr').addEventListener('change', function () {
+            isrLocked = this.checked;
+        });
+
+        document.getElementById('lockO').addEventListener('change', function () {
+            isOLocked = this.checked;
+        });
 
         document.getElementById('copyValuesButton').addEventListener('click', function () {
             // Get values from inputs
@@ -301,7 +329,7 @@
                 // Start zooming in on the drawing
                 isZooming = true;
                 zoomLevel = 1; // Reset zoom level
-                zoomDrawing();
+                // zoomDrawing();
 
                 // Stop the rotation after the wait time and start a new drawing
                 setTimeout(() => {
@@ -415,6 +443,9 @@
             ctx.moveTo(points[0].x, points[0].y);
 
             points.forEach(point => {
+
+                ctx.strokeStyle = document.getElementById('fixedLineColor').value; // Use the fixed color
+
                 ctx.lineTo(point.x, point.y);
             });
 
@@ -422,9 +453,14 @@
         }
 
         function randomizeValues() {
-            const R = getRandomInt(300, 500);  // Outer Gear Size between 100 and 200
-            const r = getRandomInt(60, 700);   // Inner Gear Size between 30 and 100
-            const O = getRandomInt(20, r);     // Pen Position between 10 and r
+            // const R = getRandomInt(300, 500);  // Outer Gear Size between 100 and 200
+            // const r = getRandomInt(60, 700);   // Inner Gear Size between 30 and 100
+            // const O = getRandomInt(20, r);     // Pen Position between 10 and r
+
+            const R = isRLocked ? parseFloat(document.getElementById('R').value) : getRandomInt(300, 500);
+            const r = isrLocked ? parseFloat(document.getElementById('r').value) : getRandomInt(60, 700);
+            const O = isOLocked ? parseFloat(document.getElementById('O').value) : getRandomInt(20, r);
+
 
             document.getElementById('R').value = R;
             document.getElementById('r').value = r;
