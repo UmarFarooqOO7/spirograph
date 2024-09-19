@@ -14,7 +14,7 @@
         }
 
         canvas {
-            border: 1px solid black;
+            /* border: 1px solid black; */
             /* background-color: black; */
             display: block;
         }
@@ -115,7 +115,7 @@
         <input type="checkbox" id="finiteToggle">
         <br>
 
-        <label for="fullDrawToggle">Full Draw:</label>
+        <label for="fullDrawToggle">Full Draw on Randomize:</label>
         <input type="checkbox" id="fullDrawToggle">
         <br>
         <br>
@@ -126,9 +126,11 @@
         <button id="fullscreenButton" onclick="toggleFullscreen()">Fullscreen</button>
 
         <br>
+        <button id="drawFullSpirographButton">Draw Full</button>
         <button id="copyValuesButton">Copy Values</button>
 
         <button onclick="downloadDrawing()">Download</button>
+        <br>
         <label for="downloadToggle">Enable Download:</label>
         <input type="checkbox" id="downloadToggle"><br>
         <a id="downloadLink" class="hidden" download="spirograph.png"></a>
@@ -137,6 +139,7 @@
 
     <script>
         let spirographs = [];
+        let gearValues = [];
         let activeGraphIndex = null;
 
         addSpirograph();
@@ -236,12 +239,18 @@
         }
 
         // Debounced version of drawSpirographFull
-        const debouncedDrawSpirographFull = debounce(drawSpirographFull, 500); // 300ms delay
+        const debouncedDrawSpirographFull = debounce(drawSpirographFull, 300); // 300ms delay
 
         // Event listeners for input changes with debounced function
         document.getElementById('R').addEventListener('input', debouncedDrawSpirographFull);
         document.getElementById('r').addEventListener('input', debouncedDrawSpirographFull);
         document.getElementById('O').addEventListener('input', debouncedDrawSpirographFull);
+
+        document.getElementById('R').addEventListener('input', updateGraphValues);
+        document.getElementById('r').addEventListener('input', updateGraphValues);
+        document.getElementById('O').addEventListener('input', updateGraphValues);
+
+        document.getElementById('drawFullSpirographButton').addEventListener('click', drawSpirographFull);
 
 
         // Event listeners for lock toggles
@@ -351,6 +360,8 @@
             // Add to the list of spirographs
             spirographs.push({ canvas, ctx });
 
+            gearValues.push({ R: 150, r: 60, O: 60 });
+
             // Add the new graph to the select dropdown
             const select = document.getElementById('selectGraph');
             const option = document.createElement('option');
@@ -372,6 +383,12 @@
         // Event listener for the select dropdown
         document.getElementById('selectGraph').addEventListener('change', function () {
             setActiveGraph(this.value);
+
+            const values = gearValues[activeGraphIndex];
+
+            document.getElementById('R').value = values.R;
+            document.getElementById('r').value = values.r;
+            document.getElementById('O').value = values.O;
         });
 
         // Function to clear the active spirograph
@@ -393,9 +410,10 @@
             document.getElementById('drawButton').disabled = true;
             document.getElementById('stopButton').disabled = false;
 
-            const R = parseFloat(document.getElementById('R').value);
-            const r = parseFloat(document.getElementById('r').value);
-            const O = parseFloat(document.getElementById('O').value);
+            // const R = parseFloat(document.getElementById('R').value);
+            // const r = parseFloat(document.getElementById('r').value);
+            // const O = parseFloat(document.getElementById('O').value);
+            const { R, r, O } = gearValues[activeGraphIndex];
 
             // Clear and resize the canvas
             // canvas.width = window.innerWidth;
@@ -621,7 +639,23 @@
             // Update the canvas glow intensity
             ctx.shadowBlur = glowIntensity;
 
+            updateGraphValues();
             drawSpirographFull();
+        }
+
+        function updateGraphValues() {
+            if (activeGraphIndex !== null) {
+                // const { ctx, canvas } = spirographs[activeGraphIndex];
+                const values = gearValues[activeGraphIndex];
+
+                // Apply values from inputs
+                values.R = parseInt(document.getElementById('R').value);
+                values.r = parseInt(document.getElementById('r').value);
+                values.O = parseInt(document.getElementById('O').value);
+
+                // Redraw the spirograph with updated values
+                // drawSpirograph();
+            }
         }
 
         function toggleSettings() {
