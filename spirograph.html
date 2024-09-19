@@ -15,7 +15,7 @@
 
         canvas {
             border: 1px solid black;
-            background-color: black;
+            /* background-color: black; */
             display: block;
         }
 
@@ -48,9 +48,21 @@
 </head>
 
 <body>
-    <canvas id="spiroCanvas"></canvas>
+    <!-- <canvas id="spiroCanvas"></canvas> -->
+
+    <div id="spirograph-container"></div>
+
     <div id="settings" class="controls">
         <h1>Spirograph App</h1>
+        <div>
+            <button id="addGraphBtn">Add Spirograph</button>
+            <select id="selectGraph">
+                <option value="" disabled selected>Select Active Graph</option>
+            </select>
+            <button id="clearGraphBtn">Clear Spirograph</button>
+        </div>
+        <br>
+
         <label for="R">Outer Gear Size (R):</label>
         <input type="number" id="R" value="150">
         <label for="lockR">Lock</label>
@@ -71,7 +83,7 @@
         <br>
         <label for="speed">Drawing Speed:</label>
         <input type="range" id="speed" min="1" max="25" value="13">
-        <span id="speedValue">5</span>
+        <span id="speedValue">13</span>
         <br>
         <label for="randomSpeedToggle">Random Speed</label>
         <input type="checkbox" id="randomSpeedToggle" />
@@ -102,6 +114,10 @@
         <label for="finiteToggle">Fixed Time:</label>
         <input type="checkbox" id="finiteToggle">
         <br>
+
+        <label for="fullDrawToggle">Full Draw:</label>
+        <input type="checkbox" id="fullDrawToggle">
+        <br>
         <br>
 
         <button id="drawButton" onclick="drawSpirograph()">Draw Spirograph</button>
@@ -120,8 +136,15 @@
     </div>
 
     <script>
-        const canvas = document.getElementById('spiroCanvas');
-        const ctx = canvas.getContext('2d');
+        let spirographs = [];
+        let activeGraphIndex = null;
+
+        addSpirograph();
+
+        const { ctx, canvas } = spirographs[activeGraphIndex];
+
+        // const canvas = document.getElementById('spiroCanvas');
+        // const ctx = canvas.getContext('2d');
         let drawing = false;
         let animationFrameId;
         let t = 0;
@@ -135,6 +158,8 @@
         let isrLocked = false;
         let isOLocked = false;
 
+        let isFullDrawEnabled = false;
+
         // This variable will control whether random speed is enabled or disabled
         let isRandomSpeedEnabled = false;
 
@@ -143,10 +168,15 @@
         // Time to wait before starting the next drawing (in milliseconds)
         const WAIT_TIME_AFTER_DRAW = 5000; // 5 seconds
 
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        // canvas.width = window.innerWidth;
+        // canvas.height = window.innerHeight;
 
-        canvas.style.backgroundColor = document.getElementById('bgColorPicker').value;
+        // canvas.style.backgroundColor = document.getElementById('bgColorPicker').value;
+        if (spirographs.length > 0) {
+            const { ctx, canvas } = spirographs[0];
+            // Fill the entire canvas with the selected color
+            canvas.style.backgroundColor = document.getElementById('bgColorPicker').value;
+        }
 
         // Update canvas size on window resize
         window.addEventListener('resize', () => {
@@ -166,7 +196,12 @@
 
         document.getElementById('bgColorPicker').addEventListener('input', function () {
             const bgColor = this.value;
-            canvas.style.backgroundColor = bgColor;
+            // Apply background color only to the first canvas
+            if (spirographs.length > 0) {
+                const { ctx, canvas } = spirographs[0];
+                // Fill the entire canvas with the selected color
+                canvas.style.backgroundColor = bgColor;
+            }
         });
 
         document.getElementById('randomColorToggle').addEventListener('change', function () {
@@ -183,7 +218,10 @@
         // Event listener for the checkbox to toggle random speed
         document.getElementById('randomSpeedToggle').addEventListener('change', function () {
             isRandomSpeedEnabled = this.checked;
-            console.log("Random speed: " + (isRandomSpeedEnabled ? "Enabled" : "Disabled"));
+        });
+
+        document.getElementById('fullDrawToggle').addEventListener('change', function () {
+            isFullDrawEnabled = this.checked;
         });
 
         // Debounce function to limit how often drawSpirographFull is called
@@ -287,7 +325,69 @@
         let zoomLevel = 1;
         let savedImage;  // Variable to store the snapshot of the drawing
 
+        // Add event listener for the "Add Spirograph" button
+        document.getElementById('addGraphBtn').addEventListener('click', addSpirograph);
+
+        document.getElementById('clearGraphBtn').addEventListener('click', clearSpirograph);
+
+        // Function to add a new canvas for a spirograph
+        function addSpirograph() {
+            const graphIndex = spirographs.length;
+
+            // Create a new canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            canvas.id = `spirograph${graphIndex}`;
+            canvas.style.position = 'absolute'; // Stack canvases on top of each other
+            canvas.style.left = '0'; // Align canvases
+            canvas.style.top = '0';  // Align canvases
+            canvas.style.zIndex = graphIndex; // Ensure they are stacked in order
+            document.getElementById('spirograph-container').appendChild(canvas);
+
+            // Create a 2D drawing context for the new canvas
+            const ctx = canvas.getContext('2d');
+
+            // Add to the list of spirographs
+            spirographs.push({ canvas, ctx });
+
+            // Add the new graph to the select dropdown
+            const select = document.getElementById('selectGraph');
+            const option = document.createElement('option');
+            option.value = graphIndex;
+            option.textContent = `Spirograph ${graphIndex + 1}`;
+            select.appendChild(option);
+
+            // Automatically select the new spirograph as active
+            select.value = graphIndex;
+            setActiveGraph(graphIndex);
+        }
+
+        // Function to set the active spirograph
+        function setActiveGraph(index) {
+            activeGraphIndex = index;
+            console.log(`Active spirograph set to: ${index}`);
+        }
+
+        // Event listener for the select dropdown
+        document.getElementById('selectGraph').addEventListener('change', function () {
+            setActiveGraph(this.value);
+        });
+
+        // Function to clear the active spirograph
+        function clearSpirograph() {
+            if (activeGraphIndex === null) return;
+
+            const { ctx, canvas } = spirographs[activeGraphIndex];
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+
         function drawSpirograph() {
+            if (activeGraphIndex === null) return;
+
+            const { ctx, canvas } = spirographs[activeGraphIndex];
+
             if (drawing) return;  // Prevent drawing if already in progress
             drawing = true;
             document.getElementById('drawButton').disabled = true;
@@ -298,9 +398,9 @@
             const O = parseFloat(document.getElementById('O').value);
 
             // Clear and resize the canvas
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            // ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // canvas.width = window.innerWidth;
+            // canvas.height = window.innerHeight;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // Calculate the total time required to complete the shape
             const startT = 0;
@@ -433,51 +533,58 @@
 
         // Function to draw the full design without animations
         function drawSpirographFull() {
-            const R = parseFloat(document.getElementById('R').value);
-            const r = parseFloat(document.getElementById('r').value);
-            const O = parseFloat(document.getElementById('O').value);
+            if (isFullDrawEnabled) {
+                const R = parseFloat(document.getElementById('R').value);
+                const r = parseFloat(document.getElementById('r').value);
+                const O = parseFloat(document.getElementById('O').value);
 
-            // Clear the canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+                if (activeGraphIndex === null) return;
 
-            const startT = 0;
-            const totalTime = 2 * Math.PI * (R / Math.gcd(R, r));
+                const { ctx, canvas } = spirographs[activeGraphIndex];
 
-            let x, y;
-            const points = [];
+                // Clear the canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            for (let t = 0; t <= totalTime; t += 0.01) {
-                x = (R - r) * Math.cos(t) + O * Math.cos((R - r) / r * t);
-                y = (R - r) * Math.sin(t) - O * Math.sin((R - r) / r * t);
+                const startT = 0;
+                const totalTime = 2 * Math.PI * (R / Math.gcd(R, r));
 
-                points.push({ x: canvas.width / 2 + x, y: canvas.height / 2 + y });
+                let x, y;
+                const points = [];
+
+                for (let t = 0; t <= totalTime; t += 0.01) {
+                    x = (R - r) * Math.cos(t) + O * Math.cos((R - r) / r * t);
+                    y = (R - r) * Math.sin(t) - O * Math.sin((R - r) / r * t);
+
+                    points.push({ x: canvas.width / 2 + x, y: canvas.height / 2 + y });
+                }
+
+                // Draw the design in one go
+                ctx.beginPath();
+                ctx.moveTo(points[0].x, points[0].y);
+
+                ctx.strokeStyle = document.getElementById('fixedLineColor').value; // Use the fixed color
+
+                // Apply glowing effect
+                const glowIntensity = document.getElementById('glowIntensity').value;
+                ctx.shadowBlur = glowIntensity;  // Set the glow intensity
+                ctx.shadowColor = ctx.strokeStyle;  // Use the line color for the glow
+                ctx.shadowOffsetX = 0;  // Offset of the shadow on X axis
+                ctx.shadowOffsetY = 0;  // Offset of the shadow on Y axis
+
+                // Draw the line segment
+                ctx.lineWidth = lineWidth;
+
+                points.forEach(point => {
+
+                    ctx.lineTo(point.x, point.y);
+                });
+
+                ctx.stroke();
             }
-
-            // Draw the design in one go
-            ctx.beginPath();
-            ctx.moveTo(points[0].x, points[0].y);
-
-            ctx.strokeStyle = document.getElementById('fixedLineColor').value; // Use the fixed color
-
-            // Apply glowing effect
-            const glowIntensity = document.getElementById('glowIntensity').value;
-            ctx.shadowBlur = glowIntensity;  // Set the glow intensity
-            ctx.shadowColor = ctx.strokeStyle;  // Use the line color for the glow
-            ctx.shadowOffsetX = 0;  // Offset of the shadow on X axis
-            ctx.shadowOffsetY = 0;  // Offset of the shadow on Y axis
-
-            // Draw the line segment
-            ctx.lineWidth = lineWidth;
-
-            points.forEach(point => {
-
-                ctx.lineTo(point.x, point.y);
-            });
-
-            ctx.stroke();
         }
 
         function randomizeValues() {
+            if (activeGraphIndex === null) return;
             // const R = getRandomInt(300, 500);  // Outer Gear Size between 100 and 200
             // const r = getRandomInt(60, 700);   // Inner Gear Size between 30 and 100
             // const O = getRandomInt(20, r);     // Pen Position between 10 and r
@@ -492,7 +599,8 @@
             document.getElementById('O').value = O;
 
             // Randomize speed and line thickness
-            speed = getRandomInt(5, 25);
+            if (isRandomSpeedEnabled)
+                speed = getRandomInt(5, 25);
             lineWidth = getRandomInt(1, 3);
             document.getElementById('speed').value = speed;
             document.getElementById('lineWidth').value = lineWidth;
@@ -500,8 +608,11 @@
             document.getElementById('lineWidthValue').innerText = lineWidth;
 
             // Randomize line color
-            const randomLineColor = getRandomColor();
-            document.getElementById('fixedLineColor').value = randomLineColor;
+            if (randomColorToggle.checked) {
+                const fixedLineColorElement = document.getElementById('fixedLineColor');
+                const randomLineColor = getRandomColor();
+                fixedLineColorElement.value = randomLineColor;
+            }
 
             const glowIntensity = getRandomInt(5, 50); // Random glow intensity between 5 and 50
             document.getElementById('glowIntensity').value = glowIntensity;
