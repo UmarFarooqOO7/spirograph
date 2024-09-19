@@ -532,7 +532,7 @@
                 prevY = canvas.height / 2 + y;
 
                 // Check if drawing should stop
-                if (t >= totalTime) {
+                if (t >= totalTime + 200) {
                     handleDrawingFinished();
                 } else {
                     animationFrameId = requestAnimationFrame(draw);
