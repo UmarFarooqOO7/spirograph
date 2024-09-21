@@ -666,7 +666,7 @@
             // Show/hide settings button based on visibility
             // settingsButton.style.display = isHidden ? 'block' : 'none';
             if (!isHidden && !drawing) {
-                drawSpirograph();
+                // drawSpirograph();
             }
         }
 
@@ -692,16 +692,36 @@
         };
 
         function downloadDrawing() {
-            // Get the current settings
-            const R = document.getElementById('R').value;
-            const r = document.getElementById('r').value;
-            const O = document.getElementById('O').value;
+            // Generate the current timestamp
+            const timestamp = new Date().toISOString().replace(/[:-]/g, '').replace(/\..+/, '');
 
-            // Create a filename based on the current settings
-            const filename = `spirograph_R${R}_r${r}_O${O}.png`;
+            const bgColor = document.getElementById('bgColorPicker').value; // Assuming there's an input for background color
 
-            // Generate the data URL for the canvas image
-            const dataURL = canvas.toDataURL('image/png');
+            // Create a filename: "Relaxing Spirals + timestamp"
+            const filename = `Relaxing_Spirals_${timestamp}.png`;
+
+            // Get all the canvases you want to combine
+            const canvases = document.querySelectorAll('canvas'); // Assumes you want to combine all <canvas> elements
+            const width = Math.max(...Array.from(canvases).map(canvas => canvas.width));
+            const height = Math.max(...Array.from(canvases).map(canvas => canvas.height));
+
+            // Create a temporary canvas to combine all the drawings
+            const combinedCanvas = document.createElement('canvas');
+            combinedCanvas.width = width;
+            combinedCanvas.height = height;
+            const combinedCtx = combinedCanvas.getContext('2d');
+
+            // Fill the background with the selected background color
+            combinedCtx.fillStyle = bgColor; // Use the selected background color
+            combinedCtx.fillRect(0, 0, combinedCanvas.width, combinedCanvas.height); // Fill the entire canvas
+
+            // Draw each canvas onto the temporary canvas
+            canvases.forEach((canvas) => {
+                combinedCtx.drawImage(canvas, 0, 0);
+            });
+
+            // Generate the data URL for the combined image
+            const dataURL = combinedCanvas.toDataURL('image/png');
 
             // Create a link element
             const link = document.getElementById('downloadLink');
