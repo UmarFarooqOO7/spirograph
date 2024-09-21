@@ -125,6 +125,9 @@ function handleKeyboardShortcuts(event) {
         case 'f':  // A: Download drawing
             toggleFullscreen();
             break;
+        case 'q': // Toggle settings
+            toggleSettings();
+            break;
         default:
             // Handle 1, 2, 3, etc. for switching graphs
             if (event.key >= '1' && event.key <= '9') {
@@ -527,6 +530,10 @@ function debounce(func, delay) {
     };
 }
 
+function toggleSettings() {
+    const settings = document.getElementById('settings');
+    settings.classList.toggle('hidden');
+}
 
 // Initialize the application on window load
 window.onload = initializeApp;
