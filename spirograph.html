@@ -181,11 +181,15 @@
             canvas.style.backgroundColor = document.getElementById('bgColorPicker').value;
         }
 
-        // Update canvas size on window resize
+        // Update all canvas sizes on window resize
         window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            const canvases = document.querySelectorAll('canvas'); // Select all canvas elements
+            canvases.forEach((canvas) => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            });
         });
+
 
         document.getElementById('speed').addEventListener('input', function () {
             speed = parseInt(this.value);
