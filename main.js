@@ -8,9 +8,10 @@ const globalConfig = {
     bgColor: '#ffffff', // Default background color
     isFiniteTimeEnabled: false,
     isFullDrawEnabled: true,
-    MAX_DRAWING_TIME: 1 * 60 * 1000, // 1 minute in milliseconds
+    MAX_DRAWING_TIME: 3 * 60 * 1000, // 1 minute in milliseconds
     // Time to wait before starting the next drawing (in milliseconds)
-    WAIT_TIME_AFTER_DRAW: 5000, // 5 seconds
+    WAIT_TIME_AFTER_DRAW: 10 * 1000, // 5 seconds
+    hue: 225
 };
 
 // Function to initialize the application
@@ -129,17 +130,22 @@ function handleKeyboardShortcuts(event) {
             toggleSettings();
             break;
         default:
-            // Handle 1, 2, 3, etc. for switching graphs
-            if (event.key >= '1' && event.key <= '9') {
-                const index = parseInt(event.key) - 1;
-                if (index < spirographs.length) {
-                    setActiveGraph(index);
-                    // Update the select input to reflect the active graph
-                    const selectInput = document.getElementById('selectGraph'); // Replace with your actual select input ID
-                    selectInput.value = index; // Set the value to the current index
-
+            if (event.key === 'PageUp') {
+                // Go to the previous graph
+                const currentIndex = activeGraphIndex;
+                if (currentIndex > 0) {
+                    setActiveGraph(currentIndex - 1);
+                }
+            } else if (event.key === 'PageDown') {
+                // Go to the next graph
+                const currentIndex = activeGraphIndex;
+                if (currentIndex < spirographs.length - 1) {
+                    setActiveGraph(currentIndex + 1);
                 }
             }
+            // Update the select input to reflect the active graph
+            const selectInput = document.getElementById('selectGraph'); // Replace with your actual select input ID
+            selectInput.value = activeGraphIndex; // Set the value to the current index
             break;
     }
 }
@@ -178,14 +184,13 @@ function addSpirograph() {
         r: 60,
         O: 60,
         lineWidth: 2,
-        fixedLineColor: '#0040ff',
+        fixedLineColor: document.getElementById('fixedLineColor').value,
         glowIntensity: 15,
         isRandomColorEnabled: document.getElementById('randomColorToggle').checked,
         // isFullDrawEnabled: document.getElementById('fullDrawToggle').checked,
         isRLocked: document.getElementById('lockR').checked,
         isrLocked: document.getElementById('lockr').checked,
         isOLocked: document.getElementById('lockO').checked,
-        hue: 0,
         t: 0,
         drawing: false,
         animationFrameId: null
@@ -242,7 +247,13 @@ function resizeAllCanvases() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
     });
-    drawSpirographFull(); // Redraw after resize
+
+    spirographs.forEach((_, index) => {
+        setActiveGraph(index); // Activate each graph one by one
+        drawSpirographFull(); // Redraw the current active graph
+    });
+
+    // drawSpirographFull(); // Redraw after resize
 }
 
 // Function to draw the full spirograph without animation
@@ -289,6 +300,8 @@ function drawSpirographFull() {
 
 // Function to draw the spirograph with animation
 function drawSpirograph() {
+    console.log('drawSpirograph');
+
     if (activeGraphIndex === null) return;
     const { ctx, canvas } = spirographs[activeGraphIndex];
     const values = gearValues[activeGraphIndex];
@@ -301,7 +314,7 @@ function drawSpirograph() {
     document.getElementById('stopButton').disabled = false;
 
     const { R, r, O, lineWidth, fixedLineColor, glowIntensity, isRandomColorEnabled } = values;
-    let { t, hue } = values;
+    let { t } = values;
     const speed = globalConfig.speed;
 
     const totalTime = 2 * Math.PI * (R / Math.gcd(R, r));
@@ -332,8 +345,8 @@ function drawSpirograph() {
         const y = (R - r) * Math.sin(t) - O * Math.sin((R - r) / r * t);
 
         if (isRandomColorEnabled) {
-            hue = (hue + 0.5) % 360;
-            ctx.strokeStyle = `hsl(${hue}, 100%, 50%)`;
+            globalConfig.hue = (globalConfig.hue + 0.075) % 360;
+            ctx.strokeStyle = `hsl(${globalConfig.hue}, 100%, 50%)`;
         } else {
             ctx.strokeStyle = fixedLineColor;
         }
@@ -351,7 +364,7 @@ function drawSpirograph() {
         prevY = canvas.height / 2 + y;
 
         if (t >= totalTime) {
-            stopDrawing();
+            handleDrawingFinished();
         } else {
             values.animationFrameId = requestAnimationFrame(draw);
         }
@@ -361,6 +374,8 @@ function drawSpirograph() {
 }
 
 function handleDrawingFinished() {
+    console.log('handleDrawingFinished');
+
     // Stop drawing
     stopDrawing();
 
@@ -370,19 +385,19 @@ function handleDrawingFinished() {
     }
 
     // Save the drawing as an image
-    savedImage = new Image();
-    savedImage.src = canvas.toDataURL(); // Save the current canvas content as an image
+    // savedImage = new Image();
+    // savedImage.src = canvas.toDataURL(); // Save the current canvas content as an image
 
 
     // Start zooming in on the drawing
-    isZooming = true;
-    zoomLevel = 1; // Reset zoom level
+    // isZooming = true;
+    // zoomLevel = 1; // Reset zoom level
     // zoomDrawing();
 
     // Stop the rotation after the wait time and start a new drawing
     setTimeout(() => {
-        isZooming = false; // Stop the zoom
-        zoomLevel = 1;  // Reset zoom level for the next time
+        // isZooming = false; // Stop the zoom
+        // zoomLevel = 1;  // Reset zoom level for the next time
 
         randomizeValues(); // Randomize for the next spirograph
         drawSpirograph();  // Start drawing again
@@ -413,12 +428,12 @@ function randomizeValues() {
     if (activeGraphIndex === null) return;
     const values = gearValues[activeGraphIndex];
 
-    values.R = values.isRLocked ? values.R : getRandomInt(300, 500);
-    values.r = values.isrLocked ? values.r : getRandomInt(60, 700);
-    values.O = values.isOLocked ? values.O : getRandomInt(20, values.r);
+    values.R = values.isRLocked ? values.R : getRandomIntInTens(300, 500);
+    values.r = values.isrLocked ? values.r : getRandomIntInTens(60, 700);
+    values.O = values.isOLocked ? values.O : getRandomIntInTens(20, values.r);
     // values.speed = getRandomInt(5, 25);
-    values.lineWidth = getRandomInt(1, 3);
-    values.glowIntensity = getRandomInt(5, 50);
+    values.lineWidth = getRandomInt(1, 2);
+    values.glowIntensity = getRandomInt(0, 30);
     if (values.isRandomColorEnabled) {
         values.fixedLineColor = getRandomColor();
     }
@@ -458,8 +473,8 @@ function downloadDrawing() {
     const combinedCtx = combinedCanvas.getContext('2d');
 
     // Fill background color
-    combinedCtx.fillStyle = bgColor;
-    combinedCtx.fillRect(0, 0, width, height);
+    // combinedCtx.fillStyle = bgColor;
+    // combinedCtx.fillRect(0, 0, width, height);
 
     // Draw each canvas onto the combined canvas
     spirographs.forEach(({ canvas }) => {
@@ -477,6 +492,12 @@ function downloadDrawing() {
 // Helper functions
 function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+// Helper function to generate a random integer between min and max (inclusive), rounded to the nearest 10
+function getRandomIntInTens(min, max) {
+    const randomInt = Math.floor(Math.random() * (max - min + 1)) + min;
+    return Math.round(randomInt / 10) * 10; // Round to nearest 10
 }
 
 function getRandomColor() {
