@@ -3,6 +3,17 @@ const spirographs = []; // Array to hold canvas and context
 const gearValues = [];  // Array to hold gear values for each spirograph
 let activeGraphIndex = null;
 
+// Get the drawing head element
+const drawingHead = document.getElementById('drawingHead');
+// Select the second <path> in the SVG
+const drawingHeadPath = drawingHead.querySelectorAll('path')[1]; // Get the second path element
+
+let activeCanvasProps = {
+    rect: 0,
+    width: 0,
+    height: 0,
+};
+
 const globalConfig = {
     speed: 10,
     bgColor: '#ffffff', // Default background color
@@ -24,6 +35,8 @@ function initializeApp() {
 
     // Set up window resize handling
     window.addEventListener('resize', resizeAllCanvases);
+
+    activeCanvasProps = getCanvasProps(); // Get canvas position and dimensions
 }
 
 // Create a debounced version of handleControlChange
@@ -214,6 +227,18 @@ function setActiveGraph(index) {
     syncUIWithValues();
 }
 
+function getActiveGraph() {
+    return { canvas, ctx } = spirographs[activeGraphIndex];
+}
+
+function getCanvasProps() {
+    const canvas = getActiveGraph().canvas;
+    const width = canvas.width;
+    const height = canvas.height;
+    const rect = canvas.getBoundingClientRect();
+    return { width, height, rect };
+}
+
 // Function to sync UI controls with the current gear values
 function syncUIWithValues() {
     if (activeGraphIndex === null) return;
@@ -254,6 +279,7 @@ function resizeAllCanvases() {
     });
 
     // drawSpirographFull(); // Redraw after resize
+    activeCanvasProps = getCanvasProps(); // Get canvas position and dimensions
 }
 
 // Function to draw the full spirograph without animation
@@ -308,6 +334,9 @@ function drawSpirograph() {
 
     clearSpirograph();
 
+    activeCanvasProps = getCanvasProps(); // Get canvas position and dimensions
+    drawingHead.style.display = 'block';
+
     if (values.drawing) return; // Prevent multiple animations
     values.drawing = true;
     document.getElementById('drawButton').disabled = true;
@@ -359,6 +388,9 @@ function drawSpirograph() {
         ctx.moveTo(prevX, prevY);
         ctx.lineTo(canvas.width / 2 + x, canvas.height / 2 + y);
         ctx.stroke();
+
+        // Update the drawing head position
+        updateDrawingHeadPosition(x, y);
 
         prevX = canvas.width / 2 + x;
         prevY = canvas.height / 2 + y;
@@ -414,6 +446,8 @@ function stopDrawing() {
     cancelAnimationFrame(values.animationFrameId);
     document.getElementById('drawButton').disabled = false;
     document.getElementById('stopButton').disabled = true;
+
+    drawingHead.style.display = 'none'; // Hide the drawing head
 }
 
 // Function to clear the active spirograph
@@ -554,6 +588,16 @@ function debounce(func, delay) {
 function toggleSettings() {
     const settings = document.getElementById('settings');
     settings.classList.toggle('hidden');
+}
+
+// Function to move the drawing head
+function updateDrawingHeadPosition(x, y) {
+
+    // Adjust the SVG position relative to the canvas
+    drawingHead.style.left = `${activeCanvasProps.rect.left + x + activeCanvasProps.width / 2 - 5}px`; // Add canvas width offset
+    drawingHead.style.top = `${activeCanvasProps.rect.top + y + activeCanvasProps.height / 2 - 30}px`; // Add canvas height offset
+
+    drawingHeadPath.style.fill = `hsl(${globalConfig.hue}, 100%, 50%)`;
 }
 
 // Initialize the application on window load
