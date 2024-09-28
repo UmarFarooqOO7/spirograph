@@ -312,7 +312,13 @@ function drawSpirographFull() {
     ctx.moveTo(points[0].x, points[0].y);
 
     // Apply line color
-    ctx.strokeStyle = isRandomColorEnabled ? getRandomColor() : fixedLineColor;
+    // ctx.strokeStyle = isRandomColorEnabled ? fixedLineColor : fixedLineColor;
+    if (isRandomColorEnabled) {
+        globalConfig.hue = (globalConfig.hue + 1) % 360;
+        ctx.strokeStyle = `hsl(${globalConfig.hue}, 100%, 50%)`;
+    } else {
+        ctx.strokeStyle = fixedLineColor;
+    }
 
     // Apply glowing effect
     ctx.shadowBlur = glowIntensity;
@@ -445,7 +451,7 @@ function handleDrawingFinished() {
 let gearAnimationActive = false;
 
 // Animation configuration
-const animationSpeed = 3; // Controls the rate of change for gear values
+const animationSpeed = 1; // Controls the rate of change for gear values
 
 function animateGearValues() {
     if (!gearAnimationActive) return;
@@ -523,7 +529,7 @@ function randomizeValues() {
     // values.speed = getRandomInt(5, 25);
     values.lineWidth = getRandomInt(2, 3);
     values.glowIntensity = getRandomInt(0, 30);
-    if (!values.isRandomColorEnabled) {
+    if (values.isRandomColorEnabled) {
         values.fixedLineColor = getRandomColor();
     }
 
