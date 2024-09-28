@@ -19,9 +19,9 @@ const globalConfig = {
     bgColor: '#ffffff', // Default background color
     isFiniteTimeEnabled: false,
     isFullDrawEnabled: true,
-    MAX_DRAWING_TIME: 3 * 60 * 1000, // 1 minute in milliseconds
+    MAX_DRAWING_TIME: 1 * 60 * 1000, // 1 minute in milliseconds
     // Time to wait before starting the next drawing (in milliseconds)
-    WAIT_TIME_AFTER_DRAW: 10 * 1000, // 5 seconds
+    WAIT_TIME_AFTER_DRAW: 6 * 1000, // 5 seconds
     hue: 225
 };
 
@@ -464,9 +464,9 @@ function randomizeValues() {
 
     values.R = values.isRLocked ? values.R : getRandomIntInTens(300, 500);
     values.r = values.isrLocked ? values.r : getRandomIntInTens(60, 700);
-    values.O = values.isOLocked ? values.O : getRandomIntInTens(20, values.r);
+    values.O = values.isOLocked ? values.O : getRandomIntInTens(60, values.r);
     // values.speed = getRandomInt(5, 25);
-    values.lineWidth = getRandomInt(1, 2);
+    values.lineWidth = getRandomInt(2, 3);
     values.glowIntensity = getRandomInt(0, 30);
     if (values.isRandomColorEnabled) {
         values.fixedLineColor = getRandomColor();
@@ -531,7 +531,7 @@ function getRandomInt(min, max) {
 // Helper function to generate a random integer between min and max (inclusive), rounded to the nearest 10
 function getRandomIntInTens(min, max) {
     const randomInt = Math.floor(Math.random() * (max - min + 1)) + min;
-    return Math.round(randomInt / 10) * 10; // Round to nearest 10
+    return Math.round(randomInt / 5) * 5; // Round to nearest 10
 }
 
 function getRandomColor() {
