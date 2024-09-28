@@ -16,7 +16,7 @@ let activeCanvasProps = {
 
 const globalConfig = {
     speed: 10,
-    bgColor: '#ffffff', // Default background color
+    bgColor: '#000', // Default background color
     isFiniteTimeEnabled: false,
     isFullDrawEnabled: true,
     MAX_DRAWING_TIME: 1 * 60 * 1000, // 1 minute in milliseconds
@@ -76,6 +76,8 @@ function setupControlEventListeners() {
     // Attach the event listener for keyboard shortcuts
     document.addEventListener('keydown', handleKeyboardShortcuts);
 
+    document.getElementById('toggleGearAnimationBtn').addEventListener('click', toggleGearAnimation);
+
     // Add other control event listeners as needed
 }
 
@@ -118,6 +120,9 @@ function handleKeyboardShortcuts(event) {
             break;
         case 'w':  // D: Start drawing
             drawSpirographFull();
+            break;
+        case 'g':  // G: Start gear drawing
+            toggleGearAnimation();
             break;
         case 's':  // S: Stop drawing
             stopDrawing();
@@ -183,7 +188,7 @@ function addSpirograph() {
 
     // Set background only for the first canvas
     if (spirographs.length === 0) {
-        const bgColor = document.getElementById('bgColorPicker').value || '#ffffff';
+        const bgColor = document.getElementById('bgColorPicker').value || '#000';
         ctx.fillStyle = bgColor;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
@@ -285,6 +290,7 @@ function resizeAllCanvases() {
 // Function to draw the full spirograph without animation
 function drawSpirographFull() {
     if (activeGraphIndex === null) return;
+    // updateBackgroundColor();
     const { ctx, canvas } = spirographs[activeGraphIndex];
     const values = gearValues[activeGraphIndex];
 
@@ -436,6 +442,50 @@ function handleDrawingFinished() {
     }, globalConfig.WAIT_TIME_AFTER_DRAW);
 }
 
+let gearAnimationActive = false;
+
+// Animation configuration
+const animationSpeed = 3; // Controls the rate of change for gear values
+
+function animateGearValues() {
+    if (!gearAnimationActive) return;
+
+    const values = gearValues[activeGraphIndex];
+
+    // Change O in the current direction (either increasing or decreasing)
+    if (values.isIncreasing) {
+        values.O += animationSpeed;
+        if (values.O >= 300) {
+            values.isIncreasing = false;  // Start decreasing when it reaches r
+        }
+    } else {
+        values.O -= animationSpeed;
+        if (values.O <= 60) {
+            // Randomize R and r when O reaches 60
+            randomizeValues();
+            values.O = 60; // Ensure O doesn't go below 60
+            values.isIncreasing = true; // Start increasing again
+        }
+    }
+
+    syncUIWithValues();
+
+    // Clear the canvas and redraw with the new gear values
+    drawSpirographFull();
+
+    // Request the next animation frame
+    animationFrameId = requestAnimationFrame(animateGearValues);
+}
+
+// Start or stop the animation based on user interaction
+function toggleGearAnimation() {
+    gearAnimationActive = !gearAnimationActive;
+    if (gearAnimationActive) {
+        animationFrameId = requestAnimationFrame(animateGearValues);
+    } else {
+        cancelAnimationFrame(animationFrameId);
+    }
+}
 
 // Function to stop drawing
 function stopDrawing() {
@@ -464,11 +514,16 @@ function randomizeValues() {
 
     values.R = values.isRLocked ? values.R : getRandomIntInTens(300, 500);
     values.r = values.isrLocked ? values.r : getRandomIntInTens(60, 700);
-    values.O = values.isOLocked ? values.O : getRandomIntInTens(60, values.r);
+    // Adjust the value of O based on the relationship between R and r
+    if (values.R > values.r) {
+        values.O = values.isOLocked ? values.O : getRandomIntInTens(60, 300); // O between 60 and 300 when R > r
+    } else {
+        values.O = values.isOLocked ? values.O : getRandomIntInTens(60, values.r); // O between 60 and r when r >= R
+    }
     // values.speed = getRandomInt(5, 25);
     values.lineWidth = getRandomInt(2, 3);
     values.glowIntensity = getRandomInt(0, 30);
-    if (values.isRandomColorEnabled) {
+    if (!values.isRandomColorEnabled) {
         values.fixedLineColor = getRandomColor();
     }
 
@@ -485,10 +540,14 @@ function randomizeValues() {
 
 // Function to update the background color of the first canvas
 function updateBackgroundColor() {
-    const bgColor = this.value;
+    const bgColor = document.getElementById('bgColorPicker').value;
     if (spirographs.length > 0) {
-        const { canvas } = spirographs[0];
+        const { canvas, ctx } = spirographs[0];
         canvas.style.backgroundColor = bgColor;
+        // ctx.fillStyle = bgColor;
+        // const width = window.innerWidth;
+        // const height = window.innerHeight;
+        // ctx.fillRect(0, 0, width, height);
     }
 }
 
@@ -531,7 +590,7 @@ function getRandomInt(min, max) {
 // Helper function to generate a random integer between min and max (inclusive), rounded to the nearest 10
 function getRandomIntInTens(min, max) {
     const randomInt = Math.floor(Math.random() * (max - min + 1)) + min;
-    return Math.round(randomInt / 5) * 5; // Round to nearest 10
+    return Math.round(randomInt / 10) * 10; // Round to nearest 10
 }
 
 function getRandomColor() {
